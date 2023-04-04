@@ -4,13 +4,14 @@
       <el-col :span="12" :xs="24">
         <el-form ref="form" @submit.prevent>
           <el-form-item>
-            <el-input v-model="data.form.text" placeholder="请输入你要搜索的内容" @keyup.enter="handleSearch">
+            <el-input v-model="data.form.text" placeholder="Please enter the content you want to search for"
+              @keyup.enter="handleSearch">
               <template #append> <el-button @click="handleSearch" :icon="data.Search" /> </template></el-input>
           </el-form-item>
           <el-form-item>
             <el-checkbox-group v-model="data.form.check">
-              <el-checkbox label="按时间排序" />
-              <el-checkbox label="按评分排序" />
+              <el-checkbox label="Sort by time" :value="1" />
+              <el-checkbox label="Sort by rating" :value="2" />
             </el-checkbox-group>
           </el-form-item>
         </el-form>
@@ -19,21 +20,29 @@
   </div>
   <div class="content-view">
     <el-row :gutter="20">
-      <el-col :xs="24" :sm="6" :md="4" v-for="(item, index) in data.listCard" :key="index">
+      <el-col :xs="24" :sm="8" :md="6" v-for="(item, index) in data.listCard" :key="index">
         <el-card :body-style="{ padding: '0px' }" class="card-view">
-          <img :src="image" class="card-image" />
-          <div style="margin: 10px">
-            <span>{{ item.name }}</span>
-          </div>
-          <div style="margin: 10px">
-            <span class="card-des">{{ item.des }}</span>
-          </div>
-          <div style="margin: 0 10px">
-            <el-rate v-model="item.star" size="small" allow-half disabled />
-          </div>
-          <div style="margin: 10px">
-            <el-tag v-for="(item2, index2) in item.tag" :key="index2" size="small" type="success" class="ml-2">{{ item2
-            }}</el-tag>
+          <div class="card-content">
+            <div class="card-header">
+              <img :src="slack_logo_mark" class="card-image" />
+              <div>
+                <div style="margin: 10px">
+                  <el-tooltip class="box-item" effect="dark" :content="item.name" placement="top-start">
+                    <span class="text-overfow">{{ item.name }}</span>
+                  </el-tooltip>
+                </div>
+                <div style="margin: 10px">
+                  <el-rate v-model="item.star" size="small" allow-half disabled />
+                </div>
+              </div>
+            </div>
+            <div>
+              <span class="card-des">{{ item.des }}</span>
+            </div>
+            <div>
+              <el-tag v-for="(item2, index2) in item.tag" :key="index2" size="small" type="success" class="ml-2">{{ item2
+              }}</el-tag>
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -44,7 +53,7 @@
 import { reactive } from "vue";
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
-import image from "../../assets/image/0.webp"
+import slack_logo_mark from "../../assets/svg/slack_logo_mark.svg"
 export default {
   setup() {
     const data = reactive({
@@ -55,59 +64,59 @@ export default {
       },
       listCard: [
         {
-          name: "插件名称",
-          des: "插件介绍",
+          name: "Plugin Name",
+          des: "Introduction to plugins",
           star: 2.6,
-          tag: ["好", "用"],
+          tag: ["Good", "Easy to use"],
         },
         {
-          name: "插件名称",
-          des: "插件介绍",
+          name: "Plugin Name",
+          des: "Introduction to plugins",
           star: 2,
-          tag: ["好", "用"],
+          tag: ["Good", "Easy to use"],
         },
         {
-          name: "插件名称",
-          des: "插件介绍",
+          name: "Plugin Name",
+          des: "Introduction to plugins",
           star: 2,
-          tag: ["好", "用"],
+          tag: ["Good", "Easy to use"],
         },
         {
-          name: "插件名称",
-          des: "插件介绍",
+          name: "Plugin NamePlugin NamePlugin NamePlugin Name",
+          des: "Introduction to plugins",
           star: 2,
-          tag: ["好", "用"],
+          tag: ["Good", "Easy to use"],
         },
         {
-          name: "插件名称",
-          des: "插件介绍",
+          name: "Plugin Name",
+          des: "Introduction to plugins",
           star: 2,
-          tag: ["好", "用"],
+          tag: ["Good", "Easy to use"],
         },
         {
-          name: "插件名称",
-          des: "插件介绍",
+          name: "Plugin Name",
+          des: "Introduction to plugins",
           star: 2,
-          tag: ["好", "用"],
+          tag: ["Good", "Easy to use"],
         },
         {
-          name: "插件名称",
-          des: "插件介绍",
+          name: "Plugin Name",
+          des: "Introduction to plugins",
           star: 2,
-          tag: ["好", "用"],
+          tag: ["Good", "Easy to use"],
         },
       ],
     });
     const handleSearch = () => {
       ElMessage({
         showClose: true,
-        message: '搜索中',
+        message: 'Searching',
         type: 'warning',
       })
     };
     return {
       data,
-      image,
+      slack_logo_mark,
       handleSearch,
     };
   },
@@ -115,19 +124,35 @@ export default {
 </script>
 <style scoped lang="scss">
 .header-view {
-  margin-top: 50px;
-  padding: 0 20px;
+  padding: 50px 20px 0;
 }
 
 .content-view {
   padding: 20px;
+  max-width: 1200px;
+  margin: auto;
 }
 
 .card-view {
   margin-bottom: 20px;
+  padding: 10px 20px;
+  height: 200px;
 
-  .card-image {
-    width: 100%;
+  .card-content>div {
+    padding-bottom: 10px;
+
+    &:last-child {
+      padding-bottom: 0;
+    }
+  }
+
+  .card-header {
+    display: flex;
+
+    .card-image {
+      width: 50px;
+      margin-right: 5px;
+    }
   }
 
   .card-des {
@@ -138,5 +163,13 @@ export default {
   .ml-2 {
     margin: 0 5px 5px 0px;
   }
+}
+
+.text-overfow {
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; //
 }
 </style>
