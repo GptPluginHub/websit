@@ -2,6 +2,17 @@
   margin: 0;
   padding: 0;
 }
+::-webkit-scrollbar{
+  width: 3px;
+}
+::-webkit-scrollbar-track{
+  /* -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); */
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb{
+  border-radius: 10px;
+  background-color: rgba(0,0,0,0.1);
+}
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
