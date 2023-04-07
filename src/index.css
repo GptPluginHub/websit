@@ -2,6 +2,9 @@
   margin: 0;
   padding: 0;
 }
+body {
+  --clamp: 2;
+}
 ::-webkit-scrollbar{
   width: 3px;
 }
@@ -18,4 +21,11 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
+}
+.text-overfow {
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--clamp);
 }

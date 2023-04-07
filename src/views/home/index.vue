@@ -61,7 +61,7 @@
               </div>
             </div>
             <div class="card-des">
-              <span>{{ item.des }}</span>
+              <div class="des-view">{{ item.des }}</div>
             </div>
             <div>
               <el-tag
@@ -152,11 +152,6 @@ export default {
   },
 };
 </script>
-<style>
-body {
-  --clamp: 2;
-}
-</style>
 <style scoped lang="scss">
 .header-view {
   padding: 50px 20px 0;
@@ -193,20 +188,14 @@ body {
   .card-des {
     color: #888888;
     font-size: 14px;
-    max-height: 80px;
-    overflow: auto;
+    .des-view{
+      max-height: 80px;
+      overflow: auto;
+    }
   }
 
   .ml-2 {
     margin: 0 5px 5px 0px;
   }
-}
-
-.text-overfow {
-  display: -webkit-box;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: var(--clamp); //
 }
 </style>
