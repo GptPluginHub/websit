@@ -13,10 +13,11 @@
     "vuex": "^4.0.2"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^4.1.0",
     "@vue/compiler-sfc": "^3.0.4",
     "sass": "^1.60.0",
     "unplugin-auto-import": "^0.15.2",
     "unplugin-vue-components": "^0.24.1",
-    "vite": "^1.0.0-rc.13"
+    "vite": "^4.2.1"
   }
 }

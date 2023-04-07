@@ -83,7 +83,7 @@
 import { reactive } from "vue";
 import { ElMessage } from "element-plus";
 import { Search } from "@element-plus/icons-vue";
-import slack_logo_mark from "../../assets/svg/slack_logo_mark.svg";
+import slack_logo_mark from "@/assets/svg/slack_logo_mark.svg";
 export default {
   setup() {
     const data = reactive({
