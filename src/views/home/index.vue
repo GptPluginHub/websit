@@ -1,23 +1,18 @@
 <template>
   <div class="header-view">
-    <el-row :gutter="0" justify="center">
+    <el-row justify="center">
       <el-col :span="12" :xs="24">
-        <el-form ref="form" @submit.prevent>
+        <el-form @submit.prevent>
           <el-form-item>
-            <el-input
-              v-model="data.form.text"
-              placeholder="Please enter the content you want to search for"
-              @keyup.enter="handleSearch"
-            >
+            <el-input v-model="data.formData.fuzzyName" clearable @clear="handleSearch"
+              placeholder="Please enter the content you want to search for" @keyup.enter="handleSearch">
               <template #append>
-                <el-button
-                  @click="handleSearch"
-                  :icon="data.Search"
-                /> </template
-            ></el-input>
+                <el-button @click="handleSearch" :icon="Search" />
+              </template>
+            </el-input>
           </el-form-item>
           <el-form-item>
-            <el-checkbox-group v-model="data.form.check">
+            <el-checkbox-group v-model="data.lables" @change="handleCheckboxChange">
               <el-checkbox label="Sort by time" :value="1" />
               <el-checkbox label="Sort by rating" :value="2" />
             </el-checkbox-group>
@@ -26,128 +21,206 @@
       </el-col>
     </el-row>
   </div>
-  <div class="content-view">
+  <div class="content-view" v-loading="data.loading">
     <el-row :gutter="20">
-      <el-col
-        :xs="24"
-        :sm="8"
-        :md="6"
-        v-for="(item, index) in data.listCard"
-        :key="index"
-      >
+      <el-col :xs="24" :sm="8" :md="6" v-for="(item, index) in data.listCard" :key="index">
         <el-card :body-style="{ padding: '0px' }" class="card-view">
           <div class="card-content">
             <div class="card-header">
-              <img :src="slack_logo_mark" class="card-image" />
-              <div>
+              <img :src="item.logoUrl" class="card-image" />
+              <div style="flex: 1">
                 <div style="margin: 10px">
-                  <el-tooltip
-                    class="box-item"
-                    effect="dark"
-                    :content="item.name"
-                    placement="top-start"
-                  >
+                  <el-tooltip class="box-item" effect="dark" :content="item.name" placement="top-start">
                     <span class="text-overfow">{{ item.name }}</span>
                   </el-tooltip>
                 </div>
-                <div style="margin: 10px">
-                  <el-rate
-                    v-model="item.star"
-                    size="small"
-                    allow-half
-                    disabled
-                  />
+                <div style="margin: 0 10px">
+                  <el-rate v-model="item.score" size="small" allow-half disabled />
                 </div>
+              </div>
+              <div style="align-self: flex-start">
+                <el-icon @click="handleTK(item)" color="#999999">
+                  <Edit />
+                </el-icon>
               </div>
             </div>
             <div class="card-des">
-              <div class="des-view">{{ item.des }}</div>
+              <div class="des-view">{{ item.description }}</div>
             </div>
-            <div>
-              <el-tag
-                v-for="(item2, index2) in item.tag"
-                :key="index2"
-                size="small"
-                type="success"
-                class="ml-2"
-                >{{ item2 }}</el-tag
-              >
+            <div style="overflow-y: auto; white-space:nowrap">
+              <el-tag v-for="(item2, index2) in item.labels" :key="index2" size="small" type="success" class="ml-2">{{
+                item2 }}</el-tag>
             </div>
           </div>
         </el-card>
       </el-col>
+      <el-col v-if="data.noData">
+        <el-empty :image-size="200" />
+      </el-col>
+    </el-row>
+    <el-row :gutter="20" v-if="data.page.total != 0">
+      <el-col>
+        <el-pagination v-model:current-page="data.formData.page" :page-size="data.formData.pageSize"
+          layout="total, prev, pager, next" :total="data.page.total" @current-change="handleCurrentChange" />
+      </el-col>
     </el-row>
   </div>
+  <el-drawer v-model="data.drawerData.visibleDrawer" direction="rtl" @closed="handleDrawerClosed">
+    <template #header>
+      <h4>{{ data.drawerData.title }}</h4>
+    </template>
+    <template #default>
+      <div>
+        <el-form :model="data.drawerData.formData" @submit.prevent label-width="100">
+          <el-form-item label="score:">
+            <el-rate v-model="data.drawerData.formData.score" allow-half />
+          </el-form-item>
+          <el-form-item label="comments:">
+            <el-input v-model="data.drawerData.formData.comments" placeholder="Please enter a comments" clearable>
+            </el-input>
+          </el-form-item>
+          <el-form-item label="label:">
+            <el-input v-model="data.drawerData.formData.label" @keyup.enter="handleAddLabel"
+              placeholder="Please enter a label" clearable>
+              <template #append>
+                <el-button @click="handleAddLabel" :icon="Plus" />
+              </template>
+            </el-input>
+            <div style="padding-top: 5px">
+              <el-tag size="small" v-for="(itemTag, indexTag) in data.drawerData.formData.labels" :key="indexTag"
+                type="success" class="ml-2" closable @close="handleTagClose(indexTag)">{{ itemTag }}</el-tag>
+            </div>
+          </el-form-item>
+        </el-form>
+      </div>
+    </template>
+    <template #footer>
+      <div style="flex: auto">
+        <el-button @click="handleCancelClick">cancel</el-button>
+        <el-button type="primary" @click="handleConfirmClick">confirm</el-button>
+      </div>
+    </template>
+  </el-drawer>
 </template>
 <script>
-import { reactive } from "vue";
+import { reactive, onMounted } from "vue";
 import { ElMessage } from "element-plus";
-import { Search } from "@element-plus/icons-vue";
+import { Search, Edit, Plus } from "@element-plus/icons-vue";
 import slack_logo_mark from "@/assets/svg/slack_logo_mark.svg";
+import { v1alpha1Plugins, pluginScore } from "@/plugins/http.js";
 export default {
+  components: {
+    Edit
+  },
   setup() {
     const data = reactive({
-      Search,
-      form: {
-        text: "",
-        check: [],
+      loading: false,
+      lables: [],
+      formData: {
+        fuzzyName: '',
+        page: 1,
+        pageSize: 12,
+        orderBy: 'desc',
+        sortByFieldName: '' // 按字段名称排序
       },
-      listCard: [
-        {
-          name: "Plugin Name",
-          des: "It is a program written according to a certain standard application program interface. It can only run on the system platform specified by the program (which may support multiple platforms at the same time), and cannot run separately from the specified platform. Because the plugin needs to call the function library or data provided by the original pure system. Many software have plugins, and there are countless types of plugins. For example, in IE, after installing relevant plugins",
-          star: 2.6,
-          tag: ["Good", "Easy to use"],
-        },
-        {
-          name: "Plugin Name",
-          des: "Introduction to plugins",
-          star: 2,
-          tag: ["Good", "Easy to use"],
-        },
-        {
-          name: "Plugin Name",
-          des: "Introduction to plugins",
-          star: 2,
-          tag: ["Good", "Easy to use"],
-        },
-        {
-          name: "Plugin NamePlugin NamePlugin NamePlugin Name",
-          des: "Introduction to plugins",
-          star: 2,
-          tag: ["Good", "Easy to use"],
-        },
-        {
-          name: "Plugin Name",
-          des: "Introduction to plugins",
-          star: 2,
-          tag: ["Good", "Easy to use"],
-        },
-        {
-          name: "Plugin Name",
-          des: "Introduction to plugins",
-          star: 2,
-          tag: ["Good", "Easy to use"],
-        },
-        {
-          name: "Plugin Name",
-          des: "Introduction to plugins",
-          star: 2,
-          tag: ["Good", "Easy to use"],
-        },
-      ],
+      page: {
+        total: 0
+      },
+      listCard: [],
+      noData: false,
+      drawerData: {
+        visibleDrawer: false,
+        title: '',
+        formData: {
+          pluginId: undefined,
+          score: 0,
+          comments: '',
+          label: '',
+          labels: []
+        }
+      }
     });
-    const handleSearch = () => {
+    onMounted(() => {
+      getList()
+    })
+    const handleCheckboxChange = ()=>{
       ElMessage({
-        showClose: true,
-        message: "Searching",
-        type: "warning",
-      });
+        type: 'error',
+        message: '没有此搜索条件'
+      })
+    }
+    const getList = () => {
+      data.loading = true
+      v1alpha1Plugins({
+        ...data.formData
+      }).then(e => {
+        data.loading = false
+        e.item && (data.listCard = e.item)
+        e.item.length === 0 ? (data.noData = true) : (data.noData = false)
+        e.page && (data.page = e.page)
+      })
+    }
+    const handleSearch = () => {
+      data.formData.page = 1;
+      getList()
     };
+    const handleCurrentChange = (val) => {
+      data.formData.page = val;
+      getList()
+    }
+    const handleTK = (item) => {
+      data.drawerData.title = item.name
+      data.drawerData.formData.pluginId = item.id
+      data.drawerData.visibleDrawer = true
+    }
+    const handleTagClose = (index) => {
+      data.drawerData.formData.labels.splice(index, 1)
+    }
+    const handleAddLabel = () => {
+      let text = data.drawerData.formData.label.trim()
+      if (text) {
+        data.drawerData.formData.labels.push(text)
+      }
+      data.drawerData.formData.label = ''
+    }
+    const handleCancelClick = () => {
+      data.drawerData.visibleDrawer = false
+    }
+    const handleConfirmClick = () => {
+      addScore({
+        "pluginId": data.drawerData.formData.pluginId,
+        "score": data.drawerData.formData.score,
+        "comments": data.drawerData.formData.comments,
+      }).then(() => {
+        handleCancelClick()
+        getList()
+      })
+    }
+    const handleDrawerClosed = () => {
+      data.drawerData.formData = {
+        pluginId: undefined,
+        score: 0,
+        comments: '',
+        label: '',
+        labels: []
+      }
+    }
+    const addScore = (data) => {
+      return pluginScore(data)
+    }
     return {
+      Search,
       data,
       slack_logo_mark,
+      handleCheckboxChange,
       handleSearch,
+      handleCurrentChange,
+      handleTK,
+      handleConfirmClick,
+      handleAddLabel,
+      handleCancelClick,
+      handleTagClose,
+      handleDrawerClosed
     };
   },
 };
@@ -160,42 +233,51 @@ export default {
 .content-view {
   padding: 20px;
   max-width: 1200px;
+  min-height: 400px;
   margin: auto;
 }
 
 .card-view {
   margin-bottom: 20px;
   padding: 10px 20px;
-  height: 200px;
 
-  .card-content > div {
-    padding-bottom: 10px;
-
-    &:last-child {
-      padding-bottom: 0;
-    }
-  }
-
-  .card-header {
+  .card-content {
+    height: 200px;
     display: flex;
+    flex-direction: column;
 
-    .card-image {
-      width: 50px;
-      margin-right: 5px;
+    &>div {
+      margin-bottom: 10px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
     }
-  }
 
-  .card-des {
-    color: #888888;
-    font-size: 14px;
-    .des-view{
+    .card-header {
+      display: flex;
+      align-items: center;
+
+      .card-image {
+        width: 50px;
+        height: 50px;
+        margin-right: 5px;
+      }
+    }
+
+    .card-des {
+      color: #888888;
+      font-size: 14px;
+      flex: 1;
       max-height: 80px;
       overflow: auto;
+
+      .des-view {}
     }
   }
+}
 
-  .ml-2 {
-    margin: 0 5px 5px 0px;
-  }
+.ml-2 {
+  margin: 0 5px 5px 0px;
 }
 </style>
