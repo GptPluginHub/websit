@@ -1,30 +1,57 @@
 <template>
-  <div class="header-view">
+  <header class="header-view">
+    <!-- <img class="logo" :src="data.logo" alt="Plugin" srcset=""> -->
+    <div></div>
+    <el-icon size="32" color="#ffffff" @click="handleOpen('https://github.com/GptPluginHub/websit')">
+      <Github />
+    </el-icon>
+  </header>
+  <div class="title-view">
+    <el-row justify="center">
+      <el-col :span="3" :xs="24" justify="center">
+        <div style="display: flex; align-items: center;justify-content: center;height: 100%;">
+          <img style="height: 100px;" class="logo" :src="data.logo" alt="Plugin" srcset="">
+        </div>
+      </el-col>
+      <el-col :span="10" :xs="24">
+        <div style="text-align: center;margin-bottom: 40px;">
+          <h1 style="font-size: 45px;">Add Plugin</h1>
+          <div style="color: #324A6D;line-height: 1.5;margin-top: 20px;">Welcome to GPH (ChatGPT Plugin Hub), the ultimate
+            marketplace for ChatGPT plugins! Share your plugin usage experiences and rate them to help others. Discover
+            amazing plugins and enhance your ChatGPT experience today!</div>
+        </div>
+      </el-col>
+    </el-row>
     <el-row justify="center">
       <el-col :span="12" :xs="24">
         <el-form @submit.prevent>
           <el-form-item>
-            <el-input v-model="data.formData.fuzzyName" clearable @clear="handleSearch"
+            <el-input size="large" v-model="data.formData.fuzzyName" clearable @clear="handleSearch"
               placeholder="Please enter the content you want to search for" @keyup.enter="handleSearch">
               <template #append>
                 <el-button @click="handleSearch" :icon="Search" />
               </template>
             </el-input>
           </el-form-item>
-          <el-form-item>
-            <el-checkbox-group v-model="data.lables" @change="handleCheckboxChange">
-              <el-checkbox label="Sort by time" :value="1" />
-              <el-checkbox label="Sort by rating" :value="2" />
-            </el-checkbox-group>
-          </el-form-item>
         </el-form>
       </el-col>
     </el-row>
   </div>
-  <div class="content-view" v-loading="data.loading">
-    <el-row :gutter="20">
+
+  <div class="content-view">
+    <el-row style="margin-bottom: 10px;">
+      <el-col :span="12">
+        <el-select v-model="data.formData.sortByFieldName" @change="handleCheckboxChange">
+          <el-option v-for="item in data.sortBy" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </el-col>
+      <el-col :span="12" style="text-align: right">
+        <el-button>Add Plugin</el-button>
+      </el-col>
+    </el-row>
+    <el-row :gutter="20" v-loading="data.loading">
       <el-col :xs="24" :sm="8" :md="6" v-for="(item, index) in data.listCard" :key="index">
-        <el-card :body-style="{ padding: '0px' }" class="card-view">
+        <el-card :body-style="{ padding: '0px' }" class="card-view" @click="handleCardClick(item)">
           <div class="card-content">
             <div class="card-header">
               <img :src="item.logoUrl" class="card-image" />
@@ -38,10 +65,18 @@
                   <el-rate v-model="item.score" size="small" allow-half disabled />
                 </div>
               </div>
-              <div style="align-self: flex-start">
-                <el-icon @click="handleTK(item)" color="#999999">
-                  <Edit />
-                </el-icon>
+              <div class="header-icon">
+                <div class="icon-edit">
+                  <el-icon @click.stop="handleTK(item)" color="#999999">
+                    <Edit />
+                  </el-icon>
+                </div>
+                <div class="icon-heat">
+                  <el-icon color="999999">
+                    <Heat />
+                  </el-icon>
+                  <span>{{ item.heat }}</span>
+                </div>
               </div>
             </div>
             <div class="card-des">
@@ -65,7 +100,7 @@
       </el-col>
     </el-row>
   </div>
-  <el-drawer v-model="data.drawerData.visibleDrawer" direction="rtl" @closed="handleDrawerClosed">
+  <el-drawer size="50%" v-model="data.drawerData.visibleDrawer" direction="rtl" @closed="handleDrawerClosed">
     <template #header>
       <h4>{{ data.drawerData.title }}</h4>
     </template>
@@ -79,7 +114,7 @@
             <el-input v-model="data.drawerData.formData.comments" placeholder="Please enter a comments" clearable>
             </el-input>
           </el-form-item>
-          <el-form-item label="label:">
+          <!-- <el-form-item label="label:">
             <el-input v-model="data.drawerData.formData.label" @keyup.enter="handleAddLabel"
               placeholder="Please enter a label" clearable>
               <template #append>
@@ -90,7 +125,7 @@
               <el-tag size="small" v-for="(itemTag, indexTag) in data.drawerData.formData.labels" :key="indexTag"
                 type="success" class="ml-2" closable @close="handleTagClose(indexTag)">{{ itemTag }}</el-tag>
             </div>
-          </el-form-item>
+          </el-form-item> -->
         </el-form>
       </div>
     </template>
@@ -104,24 +139,39 @@
 </template>
 <script>
 import { reactive, onMounted } from "vue";
-import { ElMessage } from "element-plus";
 import { Search, Edit, Plus } from "@element-plus/icons-vue";
 import slack_logo_mark from "@/assets/svg/slack_logo_mark.svg";
+import logo from "@/assets/logo.png";
+import Heat from "@/assets/svg/heat.vue";
+import Github from "@/assets/svg/github.vue";
 import { v1alpha1Plugins, pluginScore } from "@/plugins/http.js";
 export default {
   components: {
-    Edit
+    Edit,
+    Heat,
+    Github
   },
   setup() {
     const data = reactive({
+      logo,
       loading: false,
       lables: [],
+      sortBy: [
+        {
+          value: 'score',
+          label: 'Sort by rating'
+        },
+        {
+          value: 'heat',
+          label: 'Sort by heat'
+        }
+      ],
       formData: {
         fuzzyName: '',
         page: 1,
         pageSize: 12,
         orderBy: 'desc',
-        sortByFieldName: '' // 按字段名称排序
+        sortByFieldName: 'heat' // 按字段名称排序
       },
       page: {
         total: 0
@@ -143,11 +193,11 @@ export default {
     onMounted(() => {
       getList()
     })
-    const handleCheckboxChange = ()=>{
-      ElMessage({
-        type: 'error',
-        message: '没有此搜索条件'
-      })
+    const handleOpen = (url) => {
+      window.open(url)
+    }
+    const handleCheckboxChange = () => {
+      getList()
     }
     const getList = () => {
       data.loading = true
@@ -158,6 +208,8 @@ export default {
         e.item && (data.listCard = e.item)
         e.item.length === 0 ? (data.noData = true) : (data.noData = false)
         e.page && (data.page = e.page)
+      }).catch(() => {
+        data.loading = false
       })
     }
     const handleSearch = () => {
@@ -167,6 +219,9 @@ export default {
     const handleCurrentChange = (val) => {
       data.formData.page = val;
       getList()
+    }
+    const handleCardClick = (item) => {
+      window.open(`https://a60.ronfu.top/api/hub.io/v1alpha1/openapi?openapi_url=${item.apiUrl}`)
     }
     const handleTK = (item) => {
       data.drawerData.title = item.name
@@ -215,18 +270,33 @@ export default {
       handleCheckboxChange,
       handleSearch,
       handleCurrentChange,
+      handleCardClick,
       handleTK,
       handleConfirmClick,
       handleAddLabel,
       handleCancelClick,
       handleTagClose,
-      handleDrawerClosed
+      handleDrawerClosed,
+      handleOpen
     };
   },
 };
 </script>
 <style scoped lang="scss">
 .header-view {
+  background-color: var(--header-bg);
+  height: 60px;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .logo {
+    height: 42px;
+  }
+}
+
+.title-view {
   padding: 50px 20px 0;
 }
 
@@ -240,6 +310,7 @@ export default {
 .card-view {
   margin-bottom: 20px;
   padding: 10px 20px;
+  cursor: pointer;
 
   .card-content {
     height: 200px;
@@ -258,6 +329,26 @@ export default {
       display: flex;
       align-items: center;
 
+      .header-icon {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        .icon-edit {
+          text-align: right;
+        }
+
+        .icon-heat {
+          &>span {
+            display: inline-block;
+            padding-left: 2px;
+            font-size: 15px;
+            vertical-align: top;
+          }
+        }
+      }
+
       .card-image {
         width: 50px;
         height: 50px;
@@ -266,13 +357,11 @@ export default {
     }
 
     .card-des {
-      color: #888888;
+      color: var(--light-colour);
       font-size: 14px;
       flex: 1;
       max-height: 80px;
       overflow: auto;
-
-      .des-view {}
     }
   }
 }

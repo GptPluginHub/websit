@@ -4,6 +4,8 @@
 }
 body {
   --clamp: 2;
+  --header-bg: #24292f;
+  --light-colour: #88888888
 }
 ::-webkit-scrollbar{
   width: 3px;
