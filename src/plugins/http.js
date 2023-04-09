@@ -1,5 +1,5 @@
 import request from "./request";
-const url = 'http://a60.ronfu.top'
+const url = 'https://a60.ronfu.top'
 export function v1alpha1Plugins(data){
     return request({
         method: 'get',
