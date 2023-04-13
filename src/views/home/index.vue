@@ -15,7 +15,7 @@
       </el-col>
       <el-col :span="10" :xs="24">
         <div style="text-align: center;margin-bottom: 40px;">
-          <h1 style="font-size: 45px;">Add Plugin</h1>
+          <h1 style="font-size: 45px;">ChatGPT Plugin Hub</h1>
           <div style="color: #324A6D;line-height: 1.5;margin-top: 20px;">Welcome to GPH (ChatGPT Plugin Hub), the ultimate
             marketplace for ChatGPT plugins! Share your plugin usage experiences and rate them to help others. Discover
             amazing plugins and enhance your ChatGPT experience today!</div>
@@ -46,7 +46,7 @@
         </el-select>
       </el-col>
       <el-col :span="12" style="text-align: right">
-        <el-button>Add Plugin</el-button>
+        <el-button @click="data.addPluginVisible = true">Add Plugin</el-button>
       </el-col>
     </el-row>
     <el-row :gutter="20" v-loading="data.loading">
@@ -100,7 +100,7 @@
       </el-col>
     </el-row>
   </div>
-  <el-drawer size="50%" v-model="data.drawerData.visibleDrawer" direction="rtl" @closed="handleDrawerClosed">
+  <el-drawer :size="data.WDrawer" v-model="data.drawerData.visibleDrawer" direction="rtl" @closed="handleDrawerClosed">
     <template #header>
       <h4>{{ data.drawerData.title }}</h4>
     </template>
@@ -136,10 +136,12 @@
       </div>
     </template>
   </el-drawer>
+  <myDrawer :size="data.WDrawer" v-model="data.addPluginVisible" @success="handleSuccess" />
 </template>
 <script>
-import { reactive, onMounted } from "vue";
+import { reactive, onMounted, onUnmounted } from "vue";
 import { Search, Edit, Plus } from "@element-plus/icons-vue";
+import myDrawer from "./components/myDrawer.vue";
 import slack_logo_mark from "@/assets/svg/slack_logo_mark.svg";
 import logo from "@/assets/logo.png";
 import Heat from "@/assets/svg/heat.vue";
@@ -149,7 +151,8 @@ export default {
   components: {
     Edit,
     Heat,
-    Github
+    Github,
+    myDrawer
   },
   setup() {
     const data = reactive({
@@ -188,11 +191,27 @@ export default {
           label: '',
           labels: []
         }
-      }
+      },
+      addPluginVisible: false,
+      addPluginVisible2: 111
     });
     onMounted(() => {
-      getList()
+      getList();
+      window.addEventListener('resize', _resizeW)
     })
+    onUnmounted(()=>{
+      window.removeEventListener('resize', _resizeW)
+    })
+    const _resizeW = () => {
+      let w = document.body.clientWidth
+      if (w < 650) {
+        data.WDrawer = '90%'
+      } else if (w < 1230) {
+        data.WDrawer = '50%'
+      } else {
+        data.WDrawer = '30%'
+      }
+    }
     const handleOpen = (url) => {
       window.open(url)
     }
@@ -263,6 +282,11 @@ export default {
     const addScore = (data) => {
       return pluginScore(data)
     }
+    const handleSuccess = (v) => {
+      if (v) {
+        getList()
+      }
+    }
     return {
       Search,
       data,
@@ -277,7 +301,8 @@ export default {
       handleCancelClick,
       handleTagClose,
       handleDrawerClosed,
-      handleOpen
+      handleOpen,
+      handleSuccess,
     };
   },
 };

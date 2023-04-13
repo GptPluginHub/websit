@@ -1,5 +1,12 @@
 import request from "./request";
 const url = 'https://a60.ronfu.top'
+export function v1alpha1Plugin(data){
+    return request({
+        method: 'post',
+        url: url + '/apis/hub.io/v1alpha1/plugin',
+        data: data
+    })
+}
 export function v1alpha1Plugins(data){
     return request({
         method: 'get',
